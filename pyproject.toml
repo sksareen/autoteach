@@ -1,10 +1,10 @@
 [project]
-name = "autoresearch-teach"
+name = "autoresolve"
 version = "0.1.0"
-description = "Autoresearch for AI literacy tutoring — optimizing how to teach anyone AI"
+description = "A resolve-reinforcing coach app that improves itself via autoresearch"
 requires-python = ">=3.11"
 dependencies = [
-    "anthropic>=0.40.0",
+    "anthropic>=1.11.0",
 ]
 
 [build-system]

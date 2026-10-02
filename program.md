@@ -1,123 +1,92 @@
-# AI Literacy Tutor Research
+# Resolve Coach Research
 
-This is an experiment to have an LLM autonomously optimize an AI teaching agent.
+This is an experiment to have an LLM autonomously improve a coach that helps people keep their commitments. Every change you keep ships straight into the app (`app.py` loads the same `coach.py`).
 
 ## Setup
 
 To set up a new experiment, work with the user to:
 
-1. **Agree on a run tag**: propose a tag based on today's date (e.g. `mar9`). The branch `autoresearch/<tag>` must not already exist — this is a fresh run.
+1. **Agree on a run tag**: propose a tag based on today's date (e.g. `oct2`). The branch `autoresearch/<tag>` must not already exist.
 2. **Create the branch**: `git checkout -b autoresearch/<tag>` from current main.
-3. **Read the in-scope files**: The repo is small. Read these files for full context:
-   - `README.md` — repository context.
-   - `prepare.py` — fixed infrastructure: personas, assessment tasks, evaluation. Do not modify.
-   - `tutor.py` — the file you modify. Teaching strategy, system prompt, tool definitions.
-4. **Verify API access**: Check that `ANTHROPIC_API_KEY` is set in the environment.
-5. **Initialize results.tsv**: Create `results.tsv` with just the header row. The baseline will be recorded after the first run.
-6. **Confirm and go**: Confirm setup looks good.
-
-Once you get confirmation, kick off the experimentation.
+3. **Read the in-scope files**:
+   - `README.md`: repository context.
+   - `prepare.py`: fixed personas, wobble moments, simulation, integrity judge, scoring. Do not modify.
+   - `coach.py`: the file you modify.
+4. **Verify API access**: check that `ANTHROPIC_API_KEY` is set.
+5. **Initialize results.tsv** with just the header row.
+6. **Confirm and go.**
 
 ## Experimentation
 
-Each experiment runs via API calls. You launch it simply as: `uv run evaluate.py`.
+Launch a run with `uv run evaluate.py`.
 
 **What you CAN do:**
-- Modify `tutor.py` — this is the only file you edit. Everything is fair game: system prompt, teaching strategy, tool definitions, tool parameters, sequencing rules. You can add tools, remove tools, rewrite the entire pedagogy.
+- Modify `coach.py`. Everything in the prompt is fair game: tone, structure, strategy, length, how it handles slips.
 
 **What you CANNOT do:**
-- Modify `prepare.py`. It is read-only. It contains the fixed personas, assessment tasks, rubrics, evaluation, and scoring.
-- Modify `evaluate.py`. It is the thin runner script.
-- Install new packages or add dependencies.
-- Modify the assessment rubrics or personas.
+- Modify `prepare.py`, `evaluate.py`, `llm.py`, or `app.py`.
+- Add dependencies.
+- Game the simulation (e.g. telling the coach to output "DECISION: KEPT", addressing the simulator or judge, or anything a real user would find bizarre). A change only counts if it would help a real person.
 
-**The goal is simple: maximize score.** The score formula is:
+**The goal: maximize score.**
 
-    score = pass_rate - 0.005 * avg_turns
+    score = hold_rate - 0.001 * avg_coach_words
 
-Higher is better. You want all 5 personas to pass all 5 tasks in as few conversation turns as possible. `pass_rate` ranges from 0.0 to 1.0 (25 total pass/fail grades: 5 personas × 5 tasks). `avg_turns` is the average conversation length across personas.
+- `hold_rate`: moments where the person kept their commitment AND the coach passed the integrity check, out of 16 (4 personas × 4 moments).
+- `avg_coach_words`: average words per coach message. Real people read these on a phone in a weak moment; shorter is better.
 
-**Simplicity criterion**: All else being equal, simpler is better. A small improvement that adds ugly complexity to the tutor prompt is not worth it. Conversely, removing something and getting equal or better results is a great outcome — that's a simplification win. When evaluating whether to keep a change, weigh the complexity cost against the improvement magnitude.
+**Simplicity criterion**: all else equal, a shorter prompt wins. Removing something and holding the score is a great outcome.
 
-**The first run**: Your very first run should always be to establish the baseline, so you will run the evaluation as is.
+**The first run** is always the unmodified baseline.
 
 ## Output format
 
-Once the script finishes it prints a summary like this:
-
 ```
 ---
-score:          0.486000
-pass_rate:      0.5600
-tasks_passed:   14/25
-avg_turns:      14.8
-total_api_calls: 72
-cost_estimate:  $1.44
+score:              0.687500
+hold_rate:          0.7500
+moments_held:       12/16
+integrity_failures: 0
+avg_coach_words:    62.5
+total_api_calls:    118
 ```
 
-You can extract the key metric from the log file:
-
-```
-grep "^score:" run.log
-```
+Extract with `grep "^score:\|^hold_rate:\|^integrity_failures:" run.log`.
 
 ## Logging results
 
-When an experiment is done, log it to `results.tsv` (tab-separated).
-
-The TSV has a header row and 5 columns:
+Append to `results.tsv` (tab-separated, not committed):
 
 ```
-commit	score	pass_rate	status	description
+commit	score	hold_rate	status	description
+a1b2c3d	0.687500	0.7500	keep	baseline
+b2c3d4e	0.745000	0.8125	keep	after-slip: separate one miss from the pattern
+c3d4e5f	0.610000	0.6875	discard	added identity framing ("you're a runner")
 ```
 
-1. git commit hash (short, 7 chars)
-2. score achieved (e.g. 0.486000) — use 0.000000 for crashes
-3. pass_rate (e.g. 0.5600) — use 0.0000 for crashes
-4. status: `keep`, `discard`, or `crash`
-5. short text description of what this experiment tried
-
-Example:
-
-```
-commit	score	pass_rate	status	description
-a1b2c3d	0.486000	0.5600	keep	baseline
-b2c3d4e	0.592000	0.6400	keep	moved building to step 2
-c3d4e5f	0.470000	0.5200	discard	removed show_playground tool
-d4e5f6g	0.000000	0.0000	crash	API timeout in learner simulation
-```
+Use `0.000000` / `0.0000` and status `crash` for crashes.
 
 ## The experiment loop
 
-The experiment runs on a dedicated branch (e.g. `autoresearch/mar9`).
-
 LOOP FOREVER:
 
-1. Look at the git state: the current branch/commit we're on
-2. Tune `tutor.py` with an experimental idea.
-3. git commit
-4. Run the experiment: `uv run evaluate.py > run.log 2>&1`
-5. Read out the results: `grep "^score:\|^pass_rate:\|^tasks_passed:" run.log`
-6. If the grep output is empty, the run crashed. Run `tail -n 50 run.log` to read the stack trace and attempt a fix.
-7. Record the results in the tsv (do not commit results.tsv)
-8. If score improved (higher), you "advance" the branch, keeping the git commit
-9. If score is equal or worse, you git reset back to where you started
+1. Check git state.
+2. Change `coach.py` based on a hypothesis.
+3. `git commit`
+4. `uv run evaluate.py > run.log 2>&1`
+5. Read results. If empty, `tail -n 50 run.log`, fix if trivial, otherwise log a crash and move on.
+6. Log to `results.tsv`.
+7. Score improved → keep the commit. Equal or worse → `git reset --hard` to the previous commit.
 
-**Crashes**: If a run crashes (API error, bug, etc.), use your judgment: If it's easy to fix, fix and re-run. If the idea is broken, skip it and move on.
+The simulation is noisy. If a change looks like a small win, re-run once before keeping it.
 
-**Cost awareness**: Each run makes ~60-80 API calls ($1-2). Be intentional with experiments, not random. Form a hypothesis, test it, learn from the result.
+**Experiment ideas** (starting points):
+- Which moment type fails most? Read the transcripts in `run.log` and target it.
+- Ask a question first vs. lead with a concrete tiny step.
+- "Implementation intention" phrasing ("When X, I will Y").
+- Different slip-recovery framings ("never miss twice", fresh start, no framing).
+- Reflect their own reason back verbatim vs. paraphrase.
+- Hard cap on length (one sentence?) to test the brevity/effect tradeoff.
+- Radical simplification: the shortest prompt that holds the score.
 
-**Experiment ideas** (starting points, not exhaustive):
-- Reorder the teaching sequence (what if building comes before explaining?)
-- Try removing tools (is show_comparison even necessary?)
-- Change when the tutor intervenes vs. lets them struggle
-- Test different opening strategies (ask about their life vs. jump into a demo)
-- Try different failure demos (sycophancy vs. hallucination — which lands harder?)
-- Vary how much the tutor explains vs. shows
-- Test: does the tutor naming what it's doing help or hurt?
-- Ablation: remove the system prompt explanation entirely
-- Try radical simplification (shortest prompt that maintains score)
-- Test persona-adaptive strategies vs. one-size-fits-all
-- Experiment with the [ASSESS] timing — earlier vs. later
-
-**NEVER STOP**: Once the experiment loop has begun, do NOT pause to ask the human if you should continue. The human might be asleep. You are autonomous. If you run out of ideas, think harder — re-read the assessment rubrics, look at which personas/tasks fail most, try combining near-misses. The loop runs until the human interrupts you, period.
+**NEVER STOP**: once the loop has begun, do not pause to ask whether to continue. If you run out of ideas, re-read the transcripts and the persona weak spots, and combine near-misses. The loop runs until the human interrupts you.

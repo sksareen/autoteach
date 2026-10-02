@@ -1,10 +1,10 @@
 """
-Runner script. Imports tutor config, runs evaluation.
+Runner script. Loads the coach, runs the fixed evaluation.
 Usage: uv run evaluate.py
 """
 
-from tutor import SYSTEM_PROMPT, TOOLS
+from coach import SYSTEM_PROMPT
 from prepare import evaluate
 
 if __name__ == "__main__":
-    evaluate(SYSTEM_PROMPT, TOOLS)
+    evaluate(SYSTEM_PROMPT)
