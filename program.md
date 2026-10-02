@@ -12,7 +12,7 @@ To set up a new experiment, work with the user to:
    - `README.md`: repository context.
    - `prepare.py`: fixed personas, wobble moments, simulation, integrity judge, scoring. Do not modify.
    - `coach.py`: the file you modify.
-4. **Verify API access**: check that `ANTHROPIC_API_KEY` is set.
+4. **Verify API access**: check that `OPENROUTER_API_KEY` is set. All model calls go through OpenRouter.
 5. **Initialize results.tsv** with just the header row.
 6. **Confirm and go.**
 

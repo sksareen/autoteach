@@ -3,9 +3,7 @@ name = "autoresolve"
 version = "0.1.0"
 description = "A resolve-reinforcing coach app that improves itself via autoresearch"
 requires-python = ">=3.11"
-dependencies = [
-    "anthropic>=1.11.0",
-]
+dependencies = []
 
 [build-system]
 requires = ["hatchling"]

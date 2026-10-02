@@ -28,7 +28,7 @@ You set one commitment ("run 3 mornings a week", "no takeout until the card is p
 | `coach.py` | The coach's system prompt | **Yes, the only file** |
 | `prepare.py` | Fixed personas, wobble moments, simulation, integrity judge, score | No |
 | `evaluate.py` | Thin runner | No |
-| `llm.py` | Shared Claude API helper | No |
+| `llm.py` | Shared OpenRouter helper (no dependencies) | No |
 | `program.md` | Instructions for the autonomous researcher | No |
 
 ## The test
@@ -52,7 +52,7 @@ Higher is better. It rewards helping more people hold, in fewer words.
 
 ## Running it
 
-Requires Python 3.11+, [uv](https://docs.astral.sh/uv/), and `ANTHROPIC_API_KEY`. The model defaults to `claude-opus-5-5`; override with `RESOLVE_MODEL`.
+Requires Python 3.11+, [uv](https://docs.astral.sh/uv/), and an OpenRouter key in `OPENROUTER_API_KEY`. All model calls go through OpenRouter. The model defaults to `anthropic/claude-opus-5.5`; override with any OpenRouter model ID via `RESOLVE_MODEL`.
 
 **Use the app:**
 ```bash
