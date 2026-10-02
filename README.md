@@ -4,6 +4,16 @@ A simple app that reinforces your resolve, and keeps getting better at it on its
 
 You set one commitment ("run 3 mornings a week", "no takeout until the card is paid off"). When your resolve wobbles, you open the app and talk it through with a coach. Behind the scenes, an autoresearch loop (inspired by [Karpathy's autoresearch](https://github.com/karpathy/autoresearch)) keeps rewriting the coach, testing it against simulated people in hard moments, and keeping only the changes that help more of them hold the line.
 
+## Holdfast: the no-AI version
+
+`web/index.html` is the most basic version: a single page with no backend and no model calls. Three rules decide everything:
+
+1. **Score**: each nudge scores `(held + 1) / (shown + 2)` plus a curiosity bonus that shrinks the more it's shown.
+2. **Pick**: when you wobble, you get the top-scoring nudge.
+3. **Learn**: "I held" adds 1 to that nudge's held count. Either answer adds 1 to its shown count.
+
+State is never stored directly. The page keeps a list of events and replays them, so undo, redo and rewinding to any step are exact. Open the file in a browser to play.
+
 ## Two halves
 
 ```
